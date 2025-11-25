@@ -20,12 +20,14 @@ export async function listEvents(params?: {
   return data;
 }
 
-export async function register(body: { email: string; password: string; city?: string }) {
-  await api.post("/register", body);
+export async function registerUser(body: { email: string; password: string; username?: string; city?: string }) {
+  const { data } = await api.post("/register", body);
+  return data as { token: string };
 }
 
-export async function login(body: { email: string; password: string }) {
+export async function loginUser(body: { email: string; password: string }) {
   const { data } = await api.post("/login", body);
+  
   // păstrăm token-ul pentru rute protejate (wishlist)
   localStorage.setItem("token", data.token);
   return data as { token: string };

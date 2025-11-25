@@ -1,6 +1,7 @@
 import { Link, Route, Routes, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import Wishlist from "./pages/Wishlist";
 import Protected from "./Protected";
 
@@ -24,13 +25,18 @@ export default function App() {
           ) : (
             <Link className="btn" to="/login">Login</Link>
           )}
+          {localStorage.getItem("token") ? (null) : (
+          <Link className="btn" to="/signup">SignUp</Link>
+          )}
         </span>
+        
       </nav>
 
       <div className="container">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route
             path="/wishlist"
             element={

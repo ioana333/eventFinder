@@ -41,14 +41,18 @@ app.post("/api/register", async (req, res) => {
   const username = data.username ?? data.email.split("@")[0];
   const hash = await bcrypt.hash(data.password, 10);
   const user = await prisma.user.create({ data: { email: data.email, password: hash, city: data.city, username } });
-  res.json({ id: user.id });
+  //res.json({ id: user.id });
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
+  res.json({ token });
 });
 
 app.post("/api/login", async (req, res) => {
+
   const S = z.object({ email: z.string().email(), password: z.string() });
   const { email, password } = S.parse(req.body);
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: "Bad creds" });
+  
+  if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: "Bad credentials" });
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
   res.json({ token });
 });

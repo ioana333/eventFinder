@@ -1,3 +1,6 @@
+import { loginUser } from "../services";
+import { registerUser } from "../services";
+
 // mock simplu ca să ruleze fără backend
 type LoginPayload = { email: string; password: string };
 
@@ -46,10 +49,25 @@ export async function getWishlist() {
 export async function login({ email, password }: LoginPayload) {
   await delay();
   if (email && password) {
-    localStorage.setItem("token", "demo-token");
-    return { token: "demo-token" };
+    const result = await loginUser({ email, password });
+    // păstrăm token-ul pentru rute protejate (wishlist)
+    localStorage.setItem("token", result.token);
+    return result as { token: string };
   }
-  const err = new Error("Login eșuat") as ApiError;
+  const err = new Error("Logare eșuată") as ApiError;
+  err.response = { data: { error: "Email sau parolă lipsă" } };
+  throw err;
+}
+
+export async function register({ email, password, username, city }: { email: string; password: string; username?: string; city?: string }) {
+  await delay();
+  if (email && password) {
+    const result = await registerUser({ email, username, password, city });
+    // păstrăm token-ul pentru rute protejate (wishlist)
+    localStorage.setItem("token", result.token);
+    return result as { token: string };
+  }
+  const err = new Error("Înregistrare eșuată") as ApiError;
   err.response = { data: { error: "Email sau parolă lipsă" } };
   throw err;
 }
