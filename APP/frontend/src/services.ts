@@ -8,15 +8,18 @@ export type EventItem = {
   date: string;     // ISO string din backend
   category: string;
   venue?: string | null;
+  wishers: { userId: number }[];
 };
 
-export async function listEvents(params?: {
+export async function listEventsDB(params?: {
   city?: string;
   category?: string;
   sort?: string;
   order?: "asc" | "desc";
+  userId?: number;
 }): Promise<EventItem[]> {
   const { data } = await api.get("/events", { params });
+
   return data;
 }
 
@@ -28,12 +31,10 @@ export async function registerUser(body: { email: string; password: string; user
 export async function loginUser(body: { email: string; password: string }) {
   const { data } = await api.post("/login", body);
   
-  // păstrăm token-ul pentru rute protejate (wishlist)
-  localStorage.setItem("token", data.token);
-  return data as { token: string };
-}
+  return data as { token: string, userId: number  };
+  }
 
-export async function getWishlist(): Promise<EventItem[]> {
+export async function getWishlistDB(): Promise<EventItem[]> {
   const { data } = await api.get("/wishlist");
   return data;
 }

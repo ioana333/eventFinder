@@ -54,17 +54,28 @@ app.post("/api/login", async (req, res) => {
   
   if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).json({ error: "Bad credentials" });
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
-  res.json({ token });
+  res.json({ userId: user.id, token: token  });
 });
 
-app.get("/api/events", async (req, res) => {
-  const { city, sort = "date", order = "asc", category } = req.query as any;
+app.get("/api/events", async (req: any, res) => {
+  const { city, sort = "date", order = "asc", category, userId } = req.query as any;
   const where: any = {};
   if (city) where.city = city;
   if (category) where.category = category;
+  
+  const where2: any = {};
+  const include : any = {};
+  if (req.query.userId) {
+    where2.userId = Number(req.query.userId) ;
+    include.wishers = { where: where2, select: { userId: true } };
+  }
+  
+  console.log("userNR:", req.query.userId);
+  console.log("where2:", where2);
   const events = await prisma.event.findMany({
-    where,
-    orderBy: { [sort]: order === "desc" ? "desc" : "asc" }
+    where, 
+    orderBy: { [sort]: order === "desc" ? "desc" : "asc" },
+    include
   });
   res.json(events);
 });

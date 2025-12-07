@@ -1,5 +1,7 @@
 import { loginUser } from "../services";
 import { registerUser } from "../services";
+import { listEventsDB } from "../services";
+import { getWishlistDB } from "../services";
 
 // mock simplu ca să ruleze fără backend
 type LoginPayload = { email: string; password: string };
@@ -31,8 +33,9 @@ const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
 
 export async function listEvents({ city }: { city?: string }) {
   await delay();
-  const c = (city ?? "").trim().toLowerCase();
-  return fakeDB.events.filter((e) => !c || e.city.toLowerCase().includes(c));
+  const userid = localStorage.getItem("userid");
+  const res = await listEventsDB({ city: city, userId: userid ? Number(userid) : undefined });  
+  return res;
 }
 
 export async function addToWishlist(id: number) {
@@ -43,16 +46,18 @@ export async function addToWishlist(id: number) {
 
 export async function getWishlist() {
   await delay();
-  return fakeDB.events.filter((e) => fakeDB.wishlist.includes(e.id));
+  const res = await getWishlistDB();  
+  return res;
 }
 
 export async function login({ email, password }: LoginPayload) {
   await delay();
   if (email && password) {
     const result = await loginUser({ email, password });
-    // păstrăm token-ul pentru rute protejate (wishlist)
+    
     localStorage.setItem("token", result.token);
-    return result as { token: string };
+    localStorage.setItem("userid", result.userId.toString());
+    return result as { token: string, userId: number  };
   }
   const err = new Error("Logare eșuată") as ApiError;
   err.response = { data: { error: "Email sau parolă lipsă" } };
