@@ -40,8 +40,9 @@ export default function Home() {
               <div style={{ opacity: .75 }}>{e.city} • {new Date(e.date).toLocaleDateString()}</div>
               <div style={{ opacity: .75 }}>{e.category}</div>
             </div>
+
             <button
-              className="btn"
+              className={e.wishers?.length > 0 ? "btn_iWl" : "btn_niWl"}
               onClick={() => addMut.mutate(e.id)}
               disabled={addMut.isPending}
               title="Adaugă la wishlist"

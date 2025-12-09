@@ -17,6 +17,7 @@ export default function App() {
               className="btn"
               onClick={() => {
                 localStorage.removeItem("token");
+                localStorage.removeItem("userid");
                 window.location.href = "/";
               }}
             >
