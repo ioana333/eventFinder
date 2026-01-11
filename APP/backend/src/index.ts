@@ -90,6 +90,15 @@ app.post("/api/wishlist/:eventId", auth, async (req: any, res) => {
   res.json({ ok: true });
 });
 
+// Scoate un eveniment din wishlist
+app.delete("/api/wishlist/:eventId", auth, async (req: any, res) => {
+  const eventId = Number(req.params.eventId);
+  await prisma.wishlist.deleteMany({
+    where: { userId: req.user.id, eventId },
+  });
+  res.json({ ok: true });
+});
+
 app.get("/api/wishlist", auth, async (req: any, res) => {
   const items = await prisma.wishlist.findMany({
     where: { userId: req.user.id },
