@@ -1,17 +1,29 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { addToWishlist, listEvents } from "./services";
+import { addToWishlist, removeFromWishlist, listEvents } from "./services";
 
 export default function Home() {
   const [city, setCity] = useState("");
+  const qc = useQueryClient();
 
   const { data: events, isLoading, isError } = useQuery({
     queryKey: ["events", city],
     queryFn: () => listEvents({ city }),
   });
 
-  const addMut = useMutation({
-    mutationFn: (id: number) => addToWishlist(id),
+  const toggleMut = useMutation({
+    mutationFn: async ({ id, wished }: { id: number; wished: boolean }) => {
+      if (wished) {
+        await removeFromWishlist(id);
+      } else {
+        await addToWishlist(id);
+      }
+    },
+    onSuccess: () => {
+      // refresh listele ca sa se actualizeze inimioara + pagina Wishlist
+      qc.invalidateQueries({ queryKey: ["events"] });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+    },
   });
 
   return (
@@ -33,7 +45,9 @@ export default function Home() {
       {!isLoading && events?.length === 0 && <p>Nu s-au găsit evenimente.</p>}
 
       <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: ".75rem" }}>
-        {events?.map((e) => (
+        {events?.map((e) => {
+          const wished = (e.wishers?.length ?? 0) > 0;
+          return (
           <li key={e.id} className="card" style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontWeight: 600 }}>{e.title}</div>
@@ -42,15 +56,17 @@ export default function Home() {
             </div>
 
             <button
-              className={e.wishers?.length > 0 ? "btn_iWl" : "btn_niWl"}
-              onClick={() => addMut.mutate(e.id)}
-              disabled={addMut.isPending}
-              title="Adaugă la wishlist"
+              className={`wishlistHeart ${wished ? "wishlistHeart--full" : "wishlistHeart--empty"}`}
+              onClick={() => toggleMut.mutate({ id: e.id, wished })}
+              disabled={toggleMut.isPending}
+              aria-label={wished ? "Scoate din wishlist" : "Adaugă la wishlist"}
+              title={wished ? "Scoate din wishlist" : "Adaugă la wishlist"}
             >
-              {addMut.isPending ? "Se adaugă…" : "☆ Wishlist"}
+              {/* icon-only */}
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

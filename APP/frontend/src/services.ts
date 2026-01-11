@@ -42,3 +42,7 @@ export async function getWishlistDB(): Promise<EventItem[]> {
 export async function addToWishlist(eventId: number) {
   await api.post(`/wishlist/${eventId}`);
 }
+
+export async function removeFromWishlist(eventId: number) {
+  await api.delete(`/wishlist/${eventId}`);
+}

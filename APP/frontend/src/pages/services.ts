@@ -2,6 +2,8 @@ import { loginUser } from "../services";
 import { registerUser } from "../services";
 import { listEventsDB } from "../services";
 import { getWishlistDB } from "../services";
+import { addToWishlist as addToWishlistDB } from "../services";
+import { removeFromWishlist as removeFromWishlistDB } from "../services";
 
 // mock simplu ca să ruleze fără backend
 type LoginPayload = { email: string; password: string };
@@ -40,7 +42,13 @@ export async function listEvents({ city }: { city?: string }) {
 
 export async function addToWishlist(id: number) {
   await delay();
-  if (!fakeDB.wishlist.includes(id)) fakeDB.wishlist.push(id);
+  await addToWishlistDB(id);
+  return { ok: true };
+}
+
+export async function removeFromWishlist(id: number) {
+  await delay();
+  await removeFromWishlistDB(id);
   return { ok: true };
 }
 
