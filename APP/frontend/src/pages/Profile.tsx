@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { addPhoto, getWishlist, me, myPhotos } from "./services";
+import { addPhoto, getWishlistDB, me, myPhotos } from "./services";
 
 export default function Profile() {
   const qc = useQueryClient();
 
   const { data: meData } = useQuery({ queryKey: ["me"], queryFn: me });
-  const { data: wishlist } = useQuery({ queryKey: ["wishlist"], queryFn: getWishlist });
+  const { data: wishlist } = useQuery({ queryKey: ["wishlist"], queryFn: getWishlistDB });
   const { data: photos } = useQuery({ queryKey: ["myPhotos"], queryFn: myPhotos });
 
   const [imageUrl, setImageUrl] = useState("");

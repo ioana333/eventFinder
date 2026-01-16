@@ -1,86 +1,150 @@
-import { loginUser } from "../services";
-import { registerUser } from "../services";
-import { listEventsDB } from "../services";
-import { getWishlistDB } from "../services";
-import { addToWishlist as addToWishlistDB } from "../services";
-import { removeFromWishlist as removeFromWishlistDB } from "../services";
+import { api } from "@/api";
+import {
+  loginUser,
+  registerUser,
+  listEventsDB,
+  // getWishlistDB,
+  // addToWishlist,
+  // removeFromWishlist,
+  getMe,
+  listCities,
+  getMyPhotos,
+  addMyPhoto,
+  adminListEvents,
+  adminCreateEvent,
+  adminUpdateEvent,
+  adminDeleteEvent,
+  adminListSites,
+  adminCreateSite,
+  adminUpdateSite,
+  adminGenerateCode,
+  adminListCodes,
+  adminRunScrape,
+  type Role,
+  type EventItem,
+  type PhotoItem,
+  type SiteItem,
+  type AdminInviteCode,
+  type Me,
+} from "../services";
 
-// mock simplu ca să ruleze fără backend
-type LoginPayload = { email: string; password: string };
+export type ApiError = { response?: { data?: { error?: string } } };
 
-type Event = {
+// ---- auth ----
+export async function login(body: { email: string; password: string }) {
+  const result = await loginUser(body);
+  localStorage.setItem("token", result.token);
+  localStorage.setItem("userid", String(result.userId));
+  localStorage.setItem("role", result.role);
+  return result;
+}
+
+export async function register(body: {
+  email: string;
+  password: string;
+  username: string;
+  city?: string;
+  role?: Role;
+  adminCode?: string;
+}) {
+  const result = await registerUser(body);
+  localStorage.setItem("token", result.token);
+  localStorage.setItem("userid", String(result.userId));
+  localStorage.setItem("role", result.role);
+  return result;
+}
+
+
+export async function me(): Promise<Me> {
+  return getMe();
+}
+
+// ---- events (Home) ----
+export async function listEvents(params?: { q?: string; city?: string; category?: string; startDate?: string; endDate?: string }) {
+  return listEventsDB(params);
+}
+
+export async function listCitiesUI() {
+  return listCities();
+}
+
+// ---- wishlist ----
+export type WishlistRow = {
   id: number;
-  title: string;
-  city: string;
-  date: string;
-  category: string;
+  userId: number;
+  eventId: string;
+  createdAt: string;
+  event: EventItem;
 };
 
-// Error shape used by the frontend to read server-like errors
-interface ApiError extends Error {
-  response?: { data?: { error?: string } };
+export async function getWishlistDB(): Promise<WishlistRow[]> {
+  const { data } = await api.get("/wishlist");
+  return data;
 }
 
-const fakeDB = {
-  events: [
-    { id: 1, title: "Concert simfonic", city: "Cluj",      date: new Date().toISOString(), category: "Muzică" },
-    { id: 2, title: "Stand-up night",   city: "București", date: new Date().toISOString(), category: "Comedie" },
-    { id: 3, title: "Expo foto",        city: "Timișoara", date: new Date().toISOString(), category: "Artă" },
-    { id: 4, title: "Teatru clasic",    city: "București", date: new Date().toISOString(), category: "Teatru" },
-  ] as Event[],
-  wishlist: [] as number[],
-};
-
-const delay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
-
-export async function listEvents({ city }: { city?: string }) {
-  await delay();
-  const userid = localStorage.getItem("userid");
-  const res = await listEventsDB({ city: city, userId: userid ? Number(userid) : undefined });  
-  return res;
+export async function addToWishlist(eventId: string) {
+  const { data } = await api.post(`/wishlist/${eventId}`);
+  return data;
 }
 
-export async function addToWishlist(id: number) {
-  await delay();
-  await addToWishlistDB(id);
-  return { ok: true };
+export async function removeFromWishlist(eventId: string) {
+  const { data } = await api.delete(`/wishlist/${eventId}`);
+  return data;
 }
 
-export async function removeFromWishlist(id: number) {
-  await delay();
-  await removeFromWishlistDB(id);
-  return { ok: true };
+
+// ---- photos ----
+export async function myPhotos(): Promise<PhotoItem[]> {
+  return getMyPhotos();
 }
 
-export async function getWishlist() {
-  await delay();
-  const res = await getWishlistDB();  
-  return res;
+export async function addPhoto(body: { imageUrl: string; caption?: string; eventId?: string }) {
+  return addMyPhoto(body);
 }
 
-export async function login({ email, password }: LoginPayload) {
-  await delay();
-  if (email && password) {
-    const result = await loginUser({ email, password });
-    
-    localStorage.setItem("token", result.token);
-    localStorage.setItem("userid", result.userId.toString());
-    return result as { token: string, userId: number  };
-  }
-  const err = new Error("Logare eșuată") as ApiError;
-  err.response = { data: { error: "Email sau parolă lipsă" } };
-  throw err;
+
+// ---- admin wrappers ----
+export async function adminEvents(params?: { q?: string; city?: string; category?: string; startDate?: string; endDate?: string }) {
+  return adminListEvents(params);
 }
 
-export async function register({ email, password, username, city }: { email: string; password: string; username?: string; city?: string }) {
-  await delay();
-  if (email && password) {
-    const result = await registerUser({ email, username, password, city });
-    // păstrăm token-ul pentru rute protejate (wishlist)
-    localStorage.setItem("token", result.token);
-    return result as { token: string };
-  }
-  const err = new Error("Înregistrare eșuată") as ApiError;
-  err.response = { data: { error: "Email sau parolă lipsă" } };
-  throw err;
+
+export async function adminAddEvent(body: any) {
+  return adminCreateEvent(body);
 }
+
+export async function adminEditEvent(id: string, body: any) {
+  return adminUpdateEvent(id, body);
+}
+
+export async function adminRemoveEvent(id: string) {
+  return adminDeleteEvent(id);
+}
+
+export async function adminSites() {
+  return adminListSites();
+}
+
+export async function adminAddSite(body: any) {
+  return adminCreateSite(body);
+}
+
+export async function adminEditSite(id: string, body: any) {
+  return adminUpdateSite(id, body);
+}
+
+export async function adminCreateInviteCode() {
+  return adminGenerateCode(1);
+}
+
+export async function adminCodes(): Promise<AdminInviteCode[]> {
+  return adminListCodes();
+}
+
+export async function adminRunAddEvent() {
+  return adminRunScrape();
+}
+
+
+
+export type { Role, EventItem, SiteItem, AdminInviteCode, PhotoItem, Me };

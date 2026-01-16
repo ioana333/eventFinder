@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for EventFinder
 
 generator client {
   provider = "prisma-client-js"
@@ -13,32 +9,111 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  PARTYER
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
-  username  String   @unique
   password  String
+  username  String   @unique
   city      String?
-  wishlist  Wishlist[]
+  role      Role     @default(PARTYER)
   createdAt DateTime @default(now())
+
+  photos      Photo[]
+  wishlist    Wishlist[]
+  attendance  Attendance[]
+
+  createdCodes AdminInviteCode[] @relation("CodesCreated")
+  usedCode     AdminInviteCode?  @relation("CodeUsed", fields: [usedCodeId], references: [id])
+  usedCodeId   Int?              @unique
 }
 
-model Event {
-  id        Int      @id @default(autoincrement())
-  title     String
-  city      String
-  date      DateTime
-  category  String
-  venue     String?
+model AdminInviteCode {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  createdAt   DateTime @default(now())
+  usedAt      DateTime?
+
+  createdBy   User     @relation("CodesCreated", fields: [createdById], references: [id])
+  createdById Int
+
+  usedBy      User?    @relation("CodeUsed")
+}
+
+model Site {
+  id        String   @id @default(uuid())
+  name      String
+  url       String
+  jsonUrl   String?
+  enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
-  wishers   Wishlist[]
+
+  events    Event[]
+}
+
+
+model Event {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  category    String?
+  city        String
+  venue       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  url         String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime? @updatedAt
+
+  sourceSite   Site? @relation(fields: [sourceSiteId], references: [id])
+  sourceSiteId String?
+
+  wishers     Wishlist[]
+  attendance  Attendance[]
+  photos      Photo[]
+
+  @@index([city])
+  @@index([category])
+  @@index([startDate])
 }
 
 model Wishlist {
-  id      Int   @id @default(autoincrement())
-  userId  Int
-  eventId Int
-  user    User  @relation(fields: [userId], references: [id])
-  event   Event @relation(fields: [eventId], references: [id])
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
   @@unique([userId, eventId])
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
+
+model Photo {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   String?
+  imageUrl  String
+  caption   String?
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id])
 }
