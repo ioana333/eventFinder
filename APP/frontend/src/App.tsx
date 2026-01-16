@@ -4,6 +4,8 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Wishlist from "./pages/Wishlist";
 import Protected from "./Protected";
+import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 
 // Layout-ul pentru paginile care au nevoie de margini (Home, Wishlist)
 const LayoutCuContainer = () => {
@@ -15,6 +17,10 @@ const LayoutCuContainer = () => {
 };
 
 export default function App() {
+
+   const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
   return (
     <>
       {/* --- BARA DE NAVIGARE ORIGINALĂ (Cea care ți-a plăcut) --- */}
@@ -22,12 +28,14 @@ export default function App() {
         
         {/* Link-urile din stânga */}
         <div className="flex gap-6 text-white font-bold text-lg">
+          {token ? <Link to="/profile">Profile</Link> : null}
           <Link to="/" className="hover:text-brand-yellow transition-colors duration-300">
-            Acasă
+            Home
           </Link>
           <Link to="/wishlist" className="hover:text-brand-yellow transition-colors duration-300">
             Wishlist
           </Link>
+          {token && role === "ADMIN" ? <Link to="/admin">Admin</Link> : null}
         </div>
 
         {/* Zona din dreapta (Butoane) */}
@@ -75,7 +83,20 @@ export default function App() {
               </Protected>
             }
           />
-        </Route>
+          <Route  path="/admin" element={
+            <Protected>
+              <Admin />
+            </Protected>
+            }
+          />
+          <Route path="/profile" element={
+              <Protected>
+                <Profile />
+              </Protected>
+              }
+          />
+        </Route >
+
 
         {/* Paginile Full Screen (Login, SignUp) */}
         <Route path="/login" element={<Login />} />

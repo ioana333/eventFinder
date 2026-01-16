@@ -45,3 +45,6 @@ nav { display:flex; gap:.75rem; padding:1rem; background:#121215; border-bottom:
     @apply border-border; }
   body {
     @apply bg-background text-foreground; } }
+
+.btn_niWl { background:#2a2aff url('assets/empty_heart.png') no-repeat center left; color:white; border:none; border-radius:10px; padding:.5rem .9rem; cursor:pointer; }
+.btn_iWl { background:#2a2aff url('assets/full_heart.png') no-repeat center left; color:white; border:none; border-radius:10px; padding:.5rem .9rem; cursor:pointer; }

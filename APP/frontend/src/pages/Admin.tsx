@@ -235,39 +235,6 @@ export default function Admin() {
       <div className="card">
         <h3>Events</h3>
 
-        <div className="card" style={{ display: "grid", gap: ".5rem" }}>
-          <input className="input" placeholder="Search by name" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} />
-
-          <input
-            className="input"
-            placeholder="Category (e.g., Music, Theater)"
-            value={searchCategory}
-            onChange={(e) => setSearchCategory(e.target.value)}
-          />
-
-          <input
-            className="input"
-            list="cities"
-            placeholder="City (type and pick)"
-            value={searchCity}
-            onChange={(e) => setSearchCity(e.target.value)}
-          />
-          <datalist id="cities">
-            {(cities ?? []).map((c: string) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-
-          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-            <label>
-              From: <input className="input" type="date" value={searchStart} onChange={(e) => setSearchStart(e.target.value)} />
-            </label>
-            <label>
-              To: <input className="input" type="date" value={searchEnd} onChange={(e) => setSearchEnd(e.target.value)} />
-            </label>
-          </div>
-        </div>
-
         <div className="card" style={{ marginTop: ".75rem" }}>
           <h4>{editingId ? "Edit event" : "Add event manually"}</h4>
 
@@ -310,6 +277,40 @@ export default function Admin() {
               </button>
             </>
           )}
+        </div>
+
+        <div className="card" style={{ display: "grid", gap: ".5rem" }}>
+          <h4>Search Events</h4>
+          <input className="input" placeholder="Search by name" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} />
+
+          <input
+            className="input"
+            placeholder="Category (e.g., Music, Theater)"
+            value={searchCategory}
+            onChange={(e) => setSearchCategory(e.target.value)}
+          />
+
+          <input
+            className="input"
+            list="cities"
+            placeholder="City (type and pick)"
+            value={searchCity}
+            onChange={(e) => setSearchCity(e.target.value)}
+          />
+          <datalist id="cities">
+            {(cities ?? []).map((c: string) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+
+          <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+            <label>
+              From: <input className="input" type="date" value={searchStart} onChange={(e) => setSearchStart(e.target.value)} />
+            </label>
+            <label>
+              To: <input className="input" type="date" value={searchEnd} onChange={(e) => setSearchEnd(e.target.value)} />
+            </label>
+          </div>
         </div>
 
         <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: ".5rem", marginTop: ".75rem" }}>
