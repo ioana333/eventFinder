@@ -7,7 +7,7 @@ export default {
   			brand: {
   				yellow: 'rgb(249, 237, 105)',
   				orange: 'rgb(240, 138, 93)',
-  				pink: 'rgb(184, 59, 94)',
+  				pink: '#b83b5e',
   				purple: 'rgb(106, 44, 112)',
   				white: 'rgb(255, 255, 255)',
   				black: 'rgb(0,0,0)'
