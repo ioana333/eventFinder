@@ -623,6 +623,7 @@ app.post("/api/admin/run-import", requireAuth, requireAdmin, async (_req, res) =
       path.resolve(__dirname, "..", "..", "addEvents.py"),      // dacă ești în backend/src -> dist
       path.resolve(__dirname, "..", "addEvents.py"),
     ];
+    console.log("Script gasit!");
 
     const scriptPath = candidates.find((p) => fs.existsSync(p));
     if (!scriptPath) {
@@ -635,8 +636,9 @@ app.post("/api/admin/run-import", requireAuth, requireAdmin, async (_req, res) =
     }
 
     // 2) Comanda de python
-    const pythonCmd = process.env.PYTHON_CMD || "npx python";
-
+    const pythonCmd = process.env.PYTHON_CMD || "python";
+    console.log(pythonCmd, scriptPath);
+    console.log("Merge?");
     // 3) Rulează și capturează output complet
     const result = await runProcess(pythonCmd, [scriptPath], {
       cwd: process.cwd(),
@@ -648,6 +650,7 @@ app.post("/api/admin/run-import", requireAuth, requireAdmin, async (_req, res) =
       return res.status(500).json(result);
     }
 
+    
     return res.json(result);
   } catch (err: any) {
     return res.status(500).json({
@@ -656,6 +659,7 @@ app.post("/api/admin/run-import", requireAuth, requireAdmin, async (_req, res) =
       stderr: err?.stack || String(err),
     });
   }
+  
 });
 
 // helper
