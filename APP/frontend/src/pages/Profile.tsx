@@ -6,7 +6,8 @@ import { CircularGallery, type GalleryItem } from "../components/CircularGallery
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger 
 } from "../components/dialog";
-import { Camera, Mail, MapPin, Plus, User, LayoutGrid } from "lucide-react";
+import { Camera, Mail, MapPin, Plus, User, LayoutGrid, AlertCircle } from "lucide-react";
+import FileUpload, { DropZone, FileList } from "../components/FileUpload"; 
 
 export default function Profile() {
   const qc = useQueryClient();
@@ -19,27 +20,81 @@ export default function Profile() {
   const [caption, setCaption] = useState("");
   const [eventId, setEventId] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
+  
+  // Stare pentru erori vizibile în formular
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const addMut = useMutation({
-    mutationFn: () =>
-      addPhoto({
-        imageUrl: imageUrl.trim(),
+    mutationFn: () => {
+      console.log("Se trimite la server...", { imageUrlLength: imageUrl.length, caption });
+      return addPhoto({
+        imageUrl: imageUrl.trim(), // String-ul Base64
         caption: caption.trim() || undefined,
         eventId: eventId.trim() || undefined,
-      }),
+      });
+    },
     onSuccess: () => {
+      console.log("Succes! Poza a fost salvată.");
       setImageUrl("");
       setCaption("");
       setEventId("");
+      setSelectedFiles([]);
+      setUploadError(null);
       setIsDialogOpen(false);
       qc.invalidateQueries({ queryKey: ["myPhotos"] });
     },
+    onError: (err: any) => {
+      console.error("Eroare la upload:", err);
+      // Verificăm dacă eroarea este din cauza mărimii fișierului
+      if (err.response?.status === 413) {
+        setUploadError("Poza este prea mare pentru server! Încearcă una sub 1MB.");
+      } else {
+        setUploadError("Eroare la salvare. Verifică consola pentru detalii.");
+      }
+    }
   });
+
+  const handleFileChange = (files: any[]) => {
+    console.log("Fișier selectat:", files);
+    setSelectedFiles(files);
+    setUploadError(null);
+
+    if (files && files.length > 0) {
+      const file = files[0].file;
+      
+      // Verificare mărime înainte de procesare (Ex: max 4MB)
+      if (file.size > 4 * 1024 * 1024) {
+        setUploadError("Fișierul este prea mare (Max 4MB).");
+        setImageUrl("");
+        return;
+      }
+
+      const reader = new FileReader();
+      
+      reader.onloadstart = () => console.log("A început conversia în Base64...");
+      
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        console.log("Conversie gata! Lungime string:", result.length);
+        setImageUrl(result);
+      };
+      
+      reader.onerror = () => {
+        console.error("Eroare la citirea fișierului");
+        setUploadError("Nu s-a putut citi fișierul.");
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      setImageUrl("");
+    }
+  };
 
   const role = localStorage.getItem("role");
   const wishlistRows = Array.isArray(wishlistRaw) ? wishlistRaw : [];
 
-const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
+  const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
     id: p.id,
     url: p.imageUrl,
     caption: p.caption || "", 
@@ -74,23 +129,47 @@ const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle className="font-black uppercase tracking-tight text-xl">Share a Photo</DialogTitle>
+                  <DialogTitle className="font-black uppercase tracking-tight text-xl text-gray-700">Share a Photo</DialogTitle>
                 </DialogHeader>
+                
                 <div className="space-y-4 pt-4">
+                  {uploadError && (
+                    <div className="p-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <AlertCircle size={16} /> {uploadError}
+                    </div>
+                  )}
+
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-gray-400 ml-2 tracking-widest">Image URL</label>
-                    <input className="w-full px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-brand-purple font-bold text-xs" placeholder="https://..." value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+                    <label className="text-[9px] font-black uppercase text-gray-400 ml-2 tracking-widest">Upload Photo</label>
+                    <FileUpload 
+                      accept="image/*" 
+                      maxCount={1} 
+                      maxSize={5}
+                      files={selectedFiles}
+                      onFileSelectChange={handleFileChange}
+                    >
+                      <DropZone prompt="Drop your memory here or click" />
+                      <FileList 
+                        onRemove={() => { setSelectedFiles([]); setImageUrl(""); setUploadError(null); }} 
+                      />
+                    </FileUpload>
                   </div>
+
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black uppercase text-gray-400 ml-2 tracking-widest">Caption</label>
-                    <input className="w-full px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-brand-purple font-bold text-xs" placeholder="What's happening?" value={caption} onChange={(e) => setCaption(e.target.value)} />
+                    <label className="text-[9px] font-black uppercase text-gray-700 ml-2 tracking-widest">Caption</label>
+                    <input className="w-full px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-brand-purple font-bold text-xs text-gray-700" placeholder="What's happening?" value={caption} onChange={(e) => setCaption(e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[9px] font-black uppercase text-gray-400 ml-2 tracking-widest">Event ID (Optional)</label>
-                    <input className="w-full px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-brand-purple font-bold text-xs" placeholder="e.g. 123" value={eventId} onChange={(e) => setEventId(e.target.value)} />
+                    <input className="w-full px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-brand-purple font-bold text-xs text-gray-700" placeholder="e.g. 123" value={eventId} onChange={(e) => setEventId(e.target.value)} />
                   </div>
-                  <button className="w-full py-5 bg-gray-900 text-white rounded-xl font-black uppercase text-xs tracking-[0.3em] disabled:opacity-50 hover:bg-brand-purple transition-all mt-4" disabled={!imageUrl.trim() || addMut.isPending} onClick={() => addMut.mutate()}>
-                    {addMut.isPending ? "Posting..." : "Post to Gallery"}
+                  
+                  <button 
+                    className="w-full py-5 bg-gray-900 text-white rounded-xl font-black uppercase text-xs tracking-[0.3em] disabled:opacity-50 hover:bg-brand-purple transition-all mt-4" 
+                    disabled={!imageUrl || addMut.isPending} 
+                    onClick={() => addMut.mutate()}
+                  >
+                    {addMut.isPending ? "Uploading..." : "Post to Gallery"}
                   </button>
                 </div>
               </DialogContent>
@@ -98,6 +177,7 @@ const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
           </div>
         </div>
 
+        {/* GALERIA 3D */}
         <div className="space-y-8">
           <div className="flex items-center justify-between px-4">
             <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 flex items-center gap-3">
@@ -128,6 +208,7 @@ const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
           </div>
         </div>
 
+        {/* WISHLIST */}
         <div className="space-y-8">
           <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 ml-4 flex items-center gap-3">
             <LayoutGrid size={18} className="text-brand-purple" /> Saved Experiences
@@ -160,8 +241,6 @@ const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
             </div>
           )}
         </div>
-
-        {role === "ADMIN"}
       </div>
     </div>
   );
