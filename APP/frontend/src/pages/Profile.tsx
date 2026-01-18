@@ -161,17 +161,7 @@ const galleryItems: GalleryItem[] = (photos ?? []).map((p) => ({
           )}
         </div>
 
-        {role === "ADMIN" && (
-          <div className="p-10 bg-gray-900 rounded-[3rem] flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-brand-purple/20">
-            <div className="text-center md:text-left">
-              <h3 className="text-xl font-black uppercase text-white tracking-tight">Administrator Panel</h3>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Full access to system management and event moderation.</p>
-            </div>
-            <button className="px-10 py-4 bg-brand-purple text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:scale-105 transition-transform">
-              Open Admin Dashboard
-            </button>
-          </div>
-        )}
+        {role === "ADMIN"}
       </div>
     </div>
   );
