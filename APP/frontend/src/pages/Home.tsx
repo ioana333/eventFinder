@@ -1,21 +1,26 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
+import { useNavigate } from "react-router-dom"; //necesar pentru redirect
 import { listCitiesUI, listEvents, getWishlistDB, addToWishlist, removeFromWishlist } from "./services";
 import { EventCard } from "../components/EventCard";
-import { SelectorChips } from "../components/SelectorChips"; // Importul ar trebui să fie OK acum
+import { SelectorChips } from "../components/SelectorChips";
 import RomaniaMap from "../components/RomaniaMap";
 import { Calendar } from "../components/calendar"; 
 import { Search, MapPin, Calendar as CalendarIcon, X } from "lucide-react";
 
 export default function Home() {
   const qc = useQueryClient();
+  const navigate = useNavigate(); // pentru navigare
+  
   const [q, setQ] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isMapOpen, setIsMapOpen] = useState(false);
+
+  const loggedIn = !!localStorage.getItem("token"); // verificam daca exista token (pt redirectionare)
 
   const categoryOptions = ["music", "theater", "art", "cinema", "food", "sport", "technology", "international", "stand-up", "conferences", "markets"];
 
@@ -37,7 +42,7 @@ export default function Home() {
   const { data: wishlistRaw } = useQuery({
     queryKey: ["wishlist"],
     queryFn: getWishlistDB,
-    enabled: !!localStorage.getItem("token"),
+    enabled: loggedIn,
   });
 
   const wishlistIds = useMemo(() => new Set((Array.isArray(wishlistRaw) ? wishlistRaw : []).map((r: any) => r.eventId)), [wishlistRaw]);
@@ -55,7 +60,7 @@ export default function Home() {
         <div className="bg-white p-6 md:p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
             
-            {/* LEFT */}
+            {/* STÂNGA: Search, Location, Categories */}
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -82,7 +87,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* RIGHT */}
+            {/* DREAPTA: Time Period & Discover */}
             <div className="flex flex-col lg:border-l lg:border-gray-50 lg:pl-10">
               <label className="text-[9px] font-black uppercase text-gray-400 ml-4 mb-3 tracking-widest">Time Period</label>
               
@@ -127,22 +132,32 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RESULTS GRID - 3 COLUMNS FOR PANORAMIC CARDS */}
+        {/* RESULTS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {isEventsLoading ? (
             <div className="col-span-full text-center py-20 font-black text-gray-200 uppercase tracking-widest animate-pulse">
               Curating Events...
             </div>
           ) : (
-            events.map((e: any) => (
-              <EventCard 
-                key={e.id} 
-                {...e} 
-                isWished={wishlistIds.has(e.id)} 
-                isPending={toggleMut.isPending} 
-                onToggleWishlist={() => toggleMut.mutate({ id: e.id, wished: wishlistIds.has(e.id) })} 
-              />
-            ))
+            events.map((e: any) => {
+              const isWished = wishlistIds.has(e.id);
+              return (
+                <EventCard 
+                  key={e.id} 
+                  {...e} 
+                  isWished={isWished} 
+                  isPending={toggleMut.isPending} 
+                  onToggleWishlist={() => {
+                    // Verificare login înainte de mutație
+                    if (!loggedIn) {
+                      navigate("/login");
+                      return;
+                    }
+                    toggleMut.mutate({ id: e.id, wished: isWished });
+                  }} 
+                />
+              );
+            })
           )}
         </div>
 

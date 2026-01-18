@@ -7,7 +7,6 @@ interface SelectorChipsProps {
   onChange: (selected: string[]) => void;
 }
 
-// ASIGURĂ-TE CĂ AI "export const" AICI
 export const SelectorChips: React.FC<SelectorChipsProps> = ({ options, onChange }) => {
   const [selected, setSelected] = React.useState<string[]>([]);
 
