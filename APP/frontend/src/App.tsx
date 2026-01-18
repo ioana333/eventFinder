@@ -34,7 +34,7 @@ export default function App() {
           <Link to="/wishlist" className="hover:text-brand-yellow transition-colors duration-300">
             Wishlist
           </Link>
-          {token && role === "ADMIN" ? <Link to="/admin">Admin</Link> : null}
+          {token && role === "ADMIN" ? <Link to="/admin">Management</Link> : null}
         </div>
 
         {/*Butoane*/}

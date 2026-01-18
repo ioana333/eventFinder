@@ -22,7 +22,7 @@ export default function Home() {
 
   const loggedIn = !!localStorage.getItem("token"); // verificam daca exista token (pt redirectionare)
 
-  const categoryOptions = ["music", "theater", "art", "cinema", "food", "sport", "technology", "international", "stand-up", "conferences", "markets"];
+  const categoryOptions = ["music", "theater", "art", "cinema", "food", "sport", "technology", "international", "stand-up", "conferences", "markets", "others"];
 
   const filters = useMemo(() => ({
     q: q.trim() || undefined,
