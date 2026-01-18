@@ -10,7 +10,7 @@ import Profile from "./pages/Profile";
 // Layout-ul pentru paginile care au nevoie de margini (Home, Wishlist)
 const LayoutCuContainer = () => {
   return (
-    <div className="container mx-auto p-4">
+    <div className="min-h-screen bg-[#fcfcfc]">
       <Outlet />
     </div>
   );
@@ -23,10 +23,9 @@ export default function App() {
 
   return (
     <>
-      {/* --- BARA DE NAVIGARE ORIGINALĂ (Cea care ți-a plăcut) --- */}
       <nav className="w-full h-[60px] bg-brand-purple flex items-center justify-between px-6 shadow-md relative z-50">
         
-        {/* Link-urile din stânga */}
+        {/* Link-uri*/}
         <div className="flex gap-6 text-white font-bold text-lg">
           {token ? <Link to="/profile">Profile</Link> : null}
           <Link to="/" className="hover:text-brand-yellow transition-colors duration-300">
@@ -38,7 +37,7 @@ export default function App() {
           {token && role === "ADMIN" ? <Link to="/admin">Admin</Link> : null}
         </div>
 
-        {/* Zona din dreapta (Butoane) */}
+        {/*Butoane*/}
         <div className="flex items-center gap-4">
           {localStorage.getItem("token") ? (
             <button
@@ -70,9 +69,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Rutele aplicației */}
       <Routes>
-        {/* Paginile standard (cu margini) */}
         <Route element={<LayoutCuContainer />}>
           <Route path="/" element={<Home />} />
           <Route

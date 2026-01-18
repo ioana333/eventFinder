@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 
+
 const GEO_URL = "/romania.json"; //aici e fisierul cu toate coordonatele pentru harta
 
 interface RomaniaMapProps {
