@@ -60,14 +60,14 @@ export default function Home() {
         <div className="bg-white p-6 md:p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
             
-            {/* STÂNGA: Search, Location, Categories */}
+            {/* STANGA: Search, Location, Categories */}
             <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[9px] font-black uppercase text-gray-400 ml-3 tracking-widest">Search</label>
                   <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/30 focus-within:border-brand-purple focus-within:bg-white transition-all shadow-sm">
-                    <Search size={16} className="text-gray-300" />
-                    <input className="w-full bg-transparent outline-none font-bold text-xs" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+                    <Search size={16} className="text-gray-700" />
+                    <input className="w-full bg-transparent outline-none font-bold text-xs text-gray-700" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
                   </div>
                 </div>
 
@@ -148,7 +148,6 @@ export default function Home() {
                   isWished={isWished} 
                   isPending={toggleMut.isPending} 
                   onToggleWishlist={() => {
-                    // Verificare login înainte de mutație
                     if (!loggedIn) {
                       navigate("/login");
                       return;

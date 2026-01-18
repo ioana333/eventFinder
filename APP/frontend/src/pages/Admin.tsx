@@ -20,7 +20,7 @@ import RomaniaMap from "../components/RomaniaMap";
 import { format } from "date-fns";
 import { 
   Edit2, Trash2, LayoutGrid, Globe, Key, Play, 
-  Search, MapPin, X, Check, Clock, Map 
+  Search, MapPin, X, Check, Clock, Map, Tag 
 } from "lucide-react";
 
 type EditableEvent = {
@@ -48,6 +48,7 @@ export default function Admin() {
   const qc = useQueryClient();
 
   const [showMap, setShowMap] = useState(false);
+  const [isSearchMap, setIsSearchMap] = useState(false); 
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [editTitle, setEditTitle] = useState("");
@@ -65,6 +66,13 @@ export default function Admin() {
   const [siteName, setSiteName] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [siteJsonUrl, setSiteJsonUrl] = useState("");
+
+  // Search States
+  const [searchQ, setSearchQ] = useState("");
+  const [searchCity, setSearchCity] = useState("");
+  const [searchCategory, setSearchCategory] = useState("");
+  const [searchStart, setSearchStart] = useState("");
+  const [searchEnd, setSearchEnd] = useState("");
 
   // Invite codes
   const { data: codes } = useQuery({ queryKey: ["adminCodes"], queryFn: adminCodes });
@@ -94,12 +102,6 @@ export default function Admin() {
   });
 
   // Events search
-  const [searchQ, setSearchQ] = useState("");
-  const [searchCity, setSearchCity] = useState("");
-  const [searchCategory, setSearchCategory] = useState("");
-  const [searchStart, setSearchStart] = useState("");
-  const [searchEnd, setSearchEnd] = useState("");
-
   const { data: events } = useQuery({
     queryKey: ["adminEvents", searchQ, searchCity, searchCategory, searchStart, searchEnd],
     queryFn: () =>
@@ -152,7 +154,6 @@ export default function Admin() {
     setEditTitle(e.title ?? "");
     setEditCity(e.city ?? "");
     setEditCategory(e.category ?? "");
-    // datetime-local expects: YYYY-MM-DDTHH:mm
     const dt = new Date(e.startDate);
     const pad = (n: number) => String(n).padStart(2, "0");
     const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(
@@ -177,7 +178,7 @@ export default function Admin() {
         title: editTitle,
         city: editCity,
         category: editCategory || null,
-        startDate: editStart, // backend converts to Date
+        startDate: editStart,
         url: editUrl || null,
         imageUrl: imageUrl || null,
       });
@@ -202,7 +203,13 @@ export default function Admin() {
     <div className="w-full min-h-screen bg-[#fcfcfc] py-12 px-4 space-y-12 text-gray-900 relative">
       
       {showMap && (
-        <RomaniaMap onSelect={(selected) => { if (editingId) setEditCity(selected); else setNewCity(selected); setShowMap(false); }} onClose={() => setShowMap(false)} />
+        <RomaniaMap onSelect={(selected) => { 
+          if (isSearchMap) setSearchCity(selected);
+          else if (editingId) setEditCity(selected); 
+          else setNewCity(selected); 
+          setShowMap(false); 
+          setIsSearchMap(false);
+        }} onClose={() => { setShowMap(false); setIsSearchMap(false); }} />
       )}
 
       <div className="max-w-[1400px] mx-auto space-y-12">
@@ -214,7 +221,7 @@ export default function Admin() {
             <button className="flex items-center gap-2 px-6 py-3 bg-brand-purple text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" onClick={() => genCode.mutate()} disabled={genCode.isPending}>
               <Key size={16} /> Generate Code
             </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" onClick={() => runScrape.mutate()} disabled={runScrape.isPending}>
+            <button className="flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" onClick={() => runScrape.mutate()} disabled={runScrape.isPending}>
               <Play size={16} /> Run Scraper
             </button>
           </div>
@@ -222,35 +229,51 @@ export default function Admin() {
 
         {/* INVITE CODES & SCRAPER */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white p-6 rounded-[2.5rem] border-2 border-gray-50 shadow-sm">
-            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">Invite Codes</h3>
-            <div className="flex flex-wrap gap-2">
+          <div className="bg-white p-6 rounded-[2.5rem] border-2 border-gray-50 shadow-sm min-h-[140px] flex flex-col justify-center">
+            <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2 px-2">Invite Codes</h3>
+            <div className="flex flex-wrap gap-2 px-2">
               {(codes ?? []).map((c: any) => (
-                <div key={c.id} className={`px-4 py-2 rounded-xl text-[10px] font-black border ${c.usedAt ? 'bg-gray-50 text-gray-300 border-gray-100' : 'bg-brand-purple/5 text-brand-purple border-brand-purple/20'}`}>
+                <div key={c.id} className={`px-4 py-2 rounded-xl text-[10px] font-black border ${c.usedAt ? 'bg-gray-50 text-gray-300 border-gray-100' : 'bg-brand-yellow/10 text-brand-orange border-brand-pink/20'}`}>
                   {c.code} • {c.usedAt ? "USED" : "UNUSED"}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-gray-900 p-6 rounded-[2.5rem] text-white shadow-xl overflow-hidden text-[9px] font-mono whitespace-pre-wrap">
-            {runScrape.data ? `Exit Code: ${runScrape.data.code}\n${runScrape.data.out || runScrape.data.err}` : "Ready."}
+          <div className="bg-brand-pink/25 p-6 rounded-[2.5rem] text-black shadow-xl overflow-hidden text-[9px] font-mono whitespace-pre-wrap flex flex-col justify-center">
+            <h3 className="text-black/40 uppercase font-black mb-2 tracking-widest px-2">Scraper Output</h3>
+            <div className="px-2">
+              {runScrape.data ? `Exit Code: ${runScrape.data.code}\n${runScrape.data.out || runScrape.data.err}` : "Ready."}
+            </div>
           </div>
         </div>
 
         {/* SITES */}
         <div className="bg-white p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm space-y-6">
-          <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 flex items-center gap-3"><Globe size={18} className="text-brand-purple" /> Sites</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="Name" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
-            <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="URL" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
-            <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="JSON URL (optional)" value={siteJsonUrl} onChange={(e) => setSiteJsonUrl(e.target.value)} />
+          <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 flex items-center gap-3"><Globe size={18} className="text-brand-purple" /> Managed Sites</h3>
+          <div className="flex flex-col xl:flex-row items-end gap-4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow w-full">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-gray-300 ml-2">Name</label>
+                <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm outline-none focus:border-brand-purple transition-all" placeholder="iabilet-cluj" value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-gray-300 ml-2">URL</label>
+                <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm outline-none focus:border-brand-purple transition-all" placeholder="https://..." value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-black uppercase text-gray-300 ml-2">JSON Path</label>
+                <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm outline-none focus:border-brand-purple transition-all" placeholder="optional" value={siteJsonUrl} onChange={(e) => setSiteJsonUrl(e.target.value)} />
+              </div>
+            </div>
+            <button className="h-[46px] px-10 bg-gray-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-purple transition-all shadow-lg flex items-center justify-center whitespace-nowrap" onClick={() => addSiteMut.mutate()} disabled={addSiteMut.isPending || !siteName || !siteUrl}>
+              Add Site
+            </button>
           </div>
-          <button className="px-8 py-3 bg-gray-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-purple transition-all" onClick={() => addSiteMut.mutate()} disabled={addSiteMut.isPending || !siteName || !siteUrl}>Add site</button>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
             {(sites ?? []).map((s: any) => (
-              <div key={s.id} className="p-4 rounded-2xl border-2 border-gray-50 flex flex-col justify-between">
+              <div key={s.id} className="p-4 rounded-2xl border-2 border-gray-50 flex flex-col justify-between hover:border-brand-purple/20 transition-all">
                 <div>
                   <div className="font-black text-xs uppercase text-gray-900">{s.name}</div>
                   <div className="text-[10px] text-gray-400 truncate mb-4">{s.jsonUrl ?? s.url}</div>
@@ -263,7 +286,7 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* EVENTS */}
+        {/* EVENTS SECTION */}
         <div className="bg-white p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm space-y-8">
           <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 flex items-center gap-3"><LayoutGrid size={18} className="text-brand-purple" /> Events</h3>
 
@@ -337,22 +360,67 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
-             <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="Search..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} />
-             <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="City" value={searchCity} onChange={(e) => setSearchCity(e.target.value)} />
-             <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" placeholder="Category" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)} />
-             <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" type="date" value={searchStart} onChange={(e) => setSearchStart(e.target.value)} />
-             <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm" type="date" value={searchEnd} onChange={(e) => setSearchEnd(e.target.value)} />
+          {/* DATABASE EXPLORER */}
+          <div className="bg-[#fcfcfc] p-10 rounded-[3rem] border-2 border-gray-100 shadow-inner space-y-8">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 flex items-center gap-2 px-2">
+              <Search size={14}/> Database Explorer
+            </h4>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+              <div className="space-y-8 flex flex-col justify-center">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase text-gray-400 ml-4">Keyword Search</label>
+                  <div className="relative flex items-center group">
+                    <Search size={18} className="absolute left-6 text-gray-300 group-focus-within:text-brand-purple transition-colors" />
+                    <input className="w-full pl-16 pr-6 py-5 rounded-[2rem] border-2 border-white bg-white text-gray-900 font-bold text-sm shadow-sm outline-none focus:ring-2 focus:ring-brand-purple/10 transition-all" placeholder="Search events, venues..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[9px] font-black uppercase text-gray-400 ml-4 tracking-widest">Filter by Category</label>
+                  <div className="flex flex-wrap gap-2 px-2">
+                    {PREDEFINED_CATEGORIES.map(cat => {
+                      const active = searchCategory === cat;
+                      return (
+                        <button key={cat} onClick={() => setSearchCategory(active ? "" : cat)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border-2 ${active ? 'bg-brand-purple border-brand-purple text-white shadow-md' : 'bg-white border-gray-100 text-gray-400 hover:border-brand-purple/20'}`}>{cat}</button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase text-gray-400 ml-4">Filter by City</label>
+                  <div className="relative flex items-center group cursor-pointer" onClick={() => { setIsSearchMap(true); setShowMap(true); }}>
+                    <MapPin size={18} className="absolute left-6 text-brand-purple" />
+                    <input readOnly className="w-full pl-16 pr-12 py-5 rounded-[2rem] border-2 border-white bg-white text-gray-900 font-bold text-sm shadow-sm cursor-pointer outline-none group-hover:border-brand-purple/20 transition-all" placeholder="All of Romania" value={searchCity} />
+                    {searchCity && (
+                      <button onClick={(e) => { e.stopPropagation(); setSearchCity(""); }} className="absolute right-6 p-1 hover:bg-gray-100 rounded-full text-gray-400"><X size={14} /></button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 xl:justify-end">
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black uppercase text-gray-400 ml-1 block text-center tracking-widest">From Date</span>
+                    <CustomCalendar selectedDate={searchStart} onSelect={(date) => setSearchStart(date)} />
+                    {searchStart && <button onClick={() => setSearchStart("")} className="w-full text-[8px] font-black uppercase text-red-400 hover:text-red-500 mt-1">Clear</button>}
+                  </div>
+                  <div className="space-y-3">
+                    <span className="text-[9px] font-black uppercase text-gray-400 ml-1 block text-center tracking-widest">To Date</span>
+                    <CustomCalendar selectedDate={searchEnd} onSelect={(date) => setSearchEnd(date)} />
+                    {searchEnd && <button onClick={() => setSearchEnd("")} className="w-full text-[8px] font-black uppercase text-red-400 hover:text-red-500 mt-1">Clear</button>}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
             {(events ?? []).map((e: any) => (
               <div key={e.id} className="relative group">
-                <EventCard 
-                  id={e.id} title={e.title} city={e.city} venue={e.venue || "N/A"} 
-                  startDate={e.startDate} imageUrl={e.imageUrl} category={e.category} 
-                  url={e.url} isWished={false} isPending={false} onToggleWishlist={() => {}} 
-                />
+                <EventCard id={e.id} title={e.title} city={e.city} venue={e.venue || "N/A"} startDate={e.startDate} imageUrl={e.imageUrl} category={e.category} url={e.url} isWished={false} isPending={false} onToggleWishlist={() => {}} />
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100 z-20">
                   <button className="p-2 bg-white/90 backdrop-blur text-gray-900 rounded-xl shadow-xl hover:bg-brand-purple hover:text-white transition-all" onClick={() => startEdit(e)}><Edit2 size={16} /></button>
                   <button className="p-2 bg-white/90 backdrop-blur text-red-600 rounded-xl shadow-xl hover:bg-red-600 hover:text-white transition-all" onClick={() => delMut.mutate(e.id)}><Trash2 size={16} /></button>
