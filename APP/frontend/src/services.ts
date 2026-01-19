@@ -139,12 +139,12 @@ export async function listCities(): Promise<string[]> {
 
 // -------------------- Photos (dacă le folosești) --------------------
 export async function getMyPhotos(): Promise<PhotoItem[]> {
-  const { data } = await api.get("/my/photos");
+  const { data } = await api.get("/photos");
   return data;
 }
 
 export async function addMyPhoto(body: { imageUrl: string; caption?: string; eventId?: string }) {
-  const { data } = await api.post("/my/photos", body);
+  const { data } = await api.post("/photos", body);
   return data as PhotoItem;
 }
 

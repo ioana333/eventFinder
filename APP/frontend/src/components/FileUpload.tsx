@@ -201,11 +201,13 @@ export const DropZone: React.FC<{ prompt?: string }> = ({ prompt = "Click or dro
 
 export const FileUploadProvider: React.FC<any> = ({ children, files = [], accept, maxSize = 1, onFileSelectChange }) => {
   const [error, setError] = useState<string | null>(null)
-
+  console.log("Am intrat in FIle umpload provider", files);
   const validateFiles = (incomingFiles: File[]) => {
+    console.log("Validare", validateFiles);
     if (incomingFiles.length > 1) return { valid: false, errorMessage: "Only one file allowed" }
     const file = incomingFiles[0]
-    if (maxSize && file.size > maxSize * 1024 * 1024) return { valid: false, errorMessage: `Exceeds ${maxSize}MB` }
+    console.log("SIZE", file.size);
+    if (maxSize && file.size > maxSize * 1024 * 1024 * 8) return { valid: false, errorMessage: `Exceeds ${maxSize}MB` }
     if (accept && !file.type.startsWith('image/')) return { valid: false, errorMessage: "Only images allowed" }
     return { valid: true }
   }

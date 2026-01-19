@@ -17,7 +17,15 @@ app.use(express.json());
 
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin,Authorization,X-Requested-With,Content-Type,Accept"
+  );
+  next();
+});
+
 app.use(express.json({ limit: "2mb" }));
 
 const PORT = Number(process.env.PORT || 4000);
@@ -470,7 +478,6 @@ app.post("/api/photos", requireAuth, async (req, res) => {
 
   try {
     const data = S.parse(req.body);
-
     const photo = await prisma.photo.create({
       data: {
         userId: req.user!.id,
