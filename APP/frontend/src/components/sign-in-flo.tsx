@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import SignUp from "@/pages/SignUp";
+import { Link } from "react-router-dom";
 
 interface SignInProps {
   email: string;
@@ -165,7 +167,12 @@ export const SignInFlo: React.FC<SignInProps> = ({
 
       <p className="mt-8 text-center text-sm text-gray-500 font-medium">
         Don't have an account?{' '}
-        <button type="button" className="text-brand-purple hover:text-brand-pink font-bold underline decoration-2 underline-offset-4 transition-colors">
+        <button type="button" 
+        onClick={() => {
+                localStorage.clear();
+                window.location.href = "/signup";
+              }} 
+        className="text-brand-purple hover:text-brand-pink font-bold underline decoration-2 underline-offset-4 transition-colors">
           Create account
         </button>
       </p>

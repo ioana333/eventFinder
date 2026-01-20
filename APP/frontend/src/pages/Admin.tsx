@@ -93,6 +93,7 @@ export default function Admin() {
       setSiteUrl("");
       setSiteJsonUrl("");
       qc.invalidateQueries({ queryKey: ["adminSites"] });
+      adminRunAddEvent();
     },
   });
 
@@ -221,7 +222,8 @@ export default function Admin() {
             <button className="flex items-center gap-2 px-6 py-3 bg-brand-purple text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" onClick={() => genCode.mutate()} disabled={genCode.isPending}>
               <Key size={16} /> Generate Code
             </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" onClick={() => runScrape.mutate()} disabled={runScrape.isPending}>
+            <button className="flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-lg" 
+            onClick={() => runScrape.mutate()} disabled={runScrape.isPending}>
               <Play size={16} /> Run Scraper
             </button>
           </div>
@@ -266,9 +268,11 @@ export default function Admin() {
                 <input className="w-full px-5 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/50 text-gray-900 font-bold text-sm outline-none focus:border-brand-purple transition-all" placeholder="optional" value={siteJsonUrl} onChange={(e) => setSiteJsonUrl(e.target.value)} />
               </div>
             </div>
-            <button className="h-[46px] px-10 bg-gray-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-purple transition-all shadow-lg flex items-center justify-center whitespace-nowrap" onClick={() => addSiteMut.mutate()} disabled={addSiteMut.isPending || !siteName || !siteUrl}>
+            <button className="h-[46px] px-10 bg-gray-900 text-white rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-purple transition-all shadow-lg flex items-center justify-center whitespace-nowrap" 
+            onClick={() => addSiteMut.mutate()} disabled={addSiteMut.isPending || !siteName || !siteUrl}>
               Add Site
             </button>
+            
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">

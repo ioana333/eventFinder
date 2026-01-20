@@ -11,7 +11,7 @@ import FileUpload, { DropZone, FileList } from "../components/FileUpload";
 
 export default function Profile() {
   const qc = useQueryClient();
-
+  
   const { data: meData } = useQuery({ queryKey: ["me"], queryFn: me });
   const { data: wishlistRaw } = useQuery({ queryKey: ["wishlist"], queryFn: getWishlistDB });
   const { data: photos } = useQuery({ queryKey: ["myPhotos"], queryFn: myPhotos });
@@ -27,7 +27,7 @@ export default function Profile() {
 
   const addMut = useMutation({
     mutationFn: () => {
-      console.log("Se trimite la server...", { imageUrlLength: imageUrl.length, caption });
+      console.log("Se trimite la server...", { imageUrlLength: imageUrl.length, caption , imageUrl});
       return addPhoto({
         imageUrl: imageUrl.trim(), // String-ul Base64
         caption: caption.trim() || undefined,
