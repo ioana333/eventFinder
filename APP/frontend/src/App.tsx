@@ -10,42 +10,39 @@ import Profile from "./pages/Profile";
 // Layout-ul pentru paginile care au nevoie de margini (Home, Wishlist)
 const LayoutCuContainer = () => {
   return (
-    <div className="container mx-auto p-4">
+    <div className="min-h-screen bg-[#fcfcfc] pt-[60px]"> 
       <Outlet />
     </div>
   );
 };
 
 export default function App() {
-
-   const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
 
   return (
     <>
-      {/* --- BARA DE NAVIGARE ORIGINALĂ (Cea care ți-a plăcut) --- */}
-      <nav className="w-full h-[60px] bg-brand-purple flex items-center justify-between px-6 shadow-md relative z-50">
+      <nav className="fixed top-0 left-0 w-full h-[60px] bg-brand-purple flex items-center justify-between px-6 shadow-md z-[100]">
         
-        {/* Link-urile din stânga */}
+        {/* Link-uri*/}
         <div className="flex gap-6 text-white font-bold text-lg">
-          {token ? <Link to="/profile">Profile</Link> : null}
+          {token ? <Link to="/profile" className="hover:text-brand-yellow transition-all">Profile</Link> : null}
           <Link to="/" className="hover:text-brand-yellow transition-colors duration-300">
             Home
           </Link>
           <Link to="/wishlist" className="hover:text-brand-yellow transition-colors duration-300">
             Wishlist
           </Link>
-          {token && role === "ADMIN" ? <Link to="/admin">Admin</Link> : null}
+          {token && role === "ADMIN" ? <Link to="/admin" className="hover:text-brand-yellow transition-all">Management</Link> : null}
         </div>
 
-        {/* Zona din dreapta (Butoane) */}
+        {/*Butoane*/}
         <div className="flex items-center gap-4">
-          {localStorage.getItem("token") ? (
+          {token ? (
             <button
               className="px-5 py-2 rounded-lg font-semibold text-white bg-brand-pink hover:bg-brand-orange transition-all duration-300 shadow-sm hover:shadow-lg"
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("userid");
+                localStorage.clear(); // la logout curatam tot
                 window.location.href = "/";
               }}
             >
@@ -70,41 +67,38 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Rutele aplicației */}
-      <Routes>
-        {/* Paginile standard (cu margini) */}
-        <Route element={<LayoutCuContainer />}>
-          <Route path="/" element={<Home />} />
-          <Route
-            path="/wishlist"
-            element={
+      <div className="min-h-screen bg-[#fcfcfc]">
+        <Routes>
+          <Route element={<LayoutCuContainer />}>
+            <Route path="/" element={<Home />} />
+            <Route
+              path="/wishlist"
+              element={
+                <Protected>
+                  <Wishlist />
+                </Protected>
+              }
+            />
+            <Route path="/admin" element={
               <Protected>
-                <Wishlist />
-              </Protected>
-            }
-          />
-          <Route  path="/admin" element={
-            <Protected>
-              <Admin />
-            </Protected>
-            }
-          />
-          <Route path="/profile" element={
-              <Protected>
-                <Profile />
+                <Admin />
               </Protected>
               }
-          />
-        </Route >
+            />
+            <Route path="/profile" element={
+                <Protected>
+                  <Profile />
+                </Protected>
+                }
+            />
+          </Route >
 
+          <Route path="/login" element={<div className="pt-[60px]"><Login /></div>} />
+          <Route path="/signup" element={<div className="pt-[60px]"><SignUp /></div>} />
 
-        {/* Paginile Full Screen (Login, SignUp) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-
-        {/* Redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </>
   );
 }

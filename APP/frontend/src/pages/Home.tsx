@@ -1,195 +1,167 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { useNavigate } from "react-router-dom"; //necesar pentru redirect
 import { listCitiesUI, listEvents, getWishlistDB, addToWishlist, removeFromWishlist } from "./services";
-
-type EventItem = {
-  id: string; // UUID string
-  title: string;
-  city: string;
-  venue?: string | null;
-  startDate: string;
-  category?: string | null;
-  url?: string | null;
-  imageUrl?: string | null;
-};
-
-const loggedIn = !!localStorage.getItem("token");
-
-function normalizeStringArray(input: unknown): string[] {
-  if (Array.isArray(input)) return input.filter((x): x is string => typeof x === "string");
-  // suport dacă API-ul întoarce { cities: [...] }
-  if (input && typeof input === "object" && Array.isArray((input as any).cities)) {
-    return (input as any).cities.filter((x: any) => typeof x === "string");
-  }
-  return [];
-}
-
-function normalizeEventsArray(input: unknown): EventItem[] {
-  if (Array.isArray(input)) return input as EventItem[];
-  // suport dacă API-ul întoarce { events: [...] }
-  if (input && typeof input === "object" && Array.isArray((input as any).events)) {
-    return (input as any).events as EventItem[];
-  }
-  return [];
-}
+import { EventCard } from "../components/EventCard";
+import { SelectorChips } from "../components/SelectorChips";
+import RomaniaMap from "../components/RomaniaMap";
+import { Calendar } from "../components/calendar"; 
+import { Search, MapPin, Calendar as CalendarIcon, X } from "lucide-react";
 
 export default function Home() {
   const qc = useQueryClient();
-
+  const navigate = useNavigate(); // pentru navigare
+  
   const [q, setQ] = useState("");
-  const [category, setCategory] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
-  const filters = useMemo(
-    () => ({
-      q: q.trim() || undefined,
-      category: category.trim() || undefined,
-      city: city.trim() || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    }),
-    [q, category, city, startDate, endDate]
-  );
+  const loggedIn = !!localStorage.getItem("token"); // verificam daca exista token (pt redirectionare)
 
-const { data: citiesRaw, isLoading: isCitiesLoading, isError: isCitiesError } = useQuery({
-  queryKey: ["cities"],
-  queryFn: listCitiesUI,
-});
+  const categoryOptions = ["music", "theater", "art", "cinema", "food", "sport", "technology", "international", "stand-up", "conferences", "markets", "others"];
 
-  const cities = useMemo(() => normalizeStringArray(citiesRaw), [citiesRaw]);
+  const filters = useMemo(() => ({
+    q: q.trim() || undefined,
+    category: selectedCategories.length > 0 ? selectedCategories.join(",") : undefined,
+    city: city.trim() || undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  }), [q, selectedCategories, city, startDate, endDate]);
 
-const { data: eventsRaw, isLoading: isEventsLoading, isError: isEventsError } = useQuery({
-  queryKey: ["events", filters],
-  queryFn: () => listEvents(filters),
-});
+  const { data: eventsRaw, isLoading: isEventsLoading } = useQuery({
+    queryKey: ["events", filters],
+    queryFn: () => listEvents(filters),
+  });
+  
+  const events = useMemo(() => (Array.isArray(eventsRaw) ? eventsRaw : (eventsRaw as any)?.events || []), [eventsRaw]);
 
+  const { data: wishlistRaw } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: getWishlistDB,
+    enabled: loggedIn,
+  });
 
-const { data: wishlistRaw } = useQuery({
-  queryKey: ["wishlist"],
-  queryFn: getWishlistDB,
-  enabled: loggedIn,
-});
-const wishlistIds = useMemo(() => {
-  const rows = Array.isArray(wishlistRaw) ? wishlistRaw : [];
-  return new Set(rows.map((r: any) => r.eventId));
-}, [wishlistRaw]);
-
-
-  const events = useMemo(() => normalizeEventsArray(eventsRaw), [eventsRaw]);
-
-  // const addMut = useMutation({
-  //   mutationFn: (id: number) => addWish(id),
-  //   onSuccess: () => {
-  //     // dacă ai query de wishlist în altă parte, asta îl va reîncărca
-  //     qc.invalidateQueries({ queryKey: ["wishlist"] });
-  //   },
-  // });
+  const wishlistIds = useMemo(() => new Set((Array.isArray(wishlistRaw) ? wishlistRaw : []).map((r: any) => r.eventId)), [wishlistRaw]);
 
   const toggleMut = useMutation({
-  mutationFn: async (vars: { id: string; wished: boolean }) => {
-    if (vars.wished) return removeFromWishlist(vars.id);
-    return addToWishlist(vars.id);
-  },
-  onSuccess: () => {
-    qc.invalidateQueries({ queryKey: ["wishlist"] });
-  },
-});
+    mutationFn: async (vars: { id: string; wished: boolean }) => vars.wished ? removeFromWishlist(vars.id) : addToWishlist(vars.id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["wishlist"] }),
+  });
 
   return (
-    <div className="stack">
-      <h2>Events</h2>
+    <div className="w-full min-h-screen bg-[#fcfcfc] py-10 px-4">
+      <div className="w-full max-w-[1400px] mx-auto">
+        
+        {/* FILTERS CARD */}
+        <div className="bg-white p-6 md:p-8 rounded-[3rem] border-2 border-gray-100 shadow-sm mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+            
+            {/* STANGA: Search, Location, Categories */}
+            <div className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black uppercase text-gray-400 ml-3 tracking-widest">Search</label>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/30 focus-within:border-brand-purple focus-within:bg-white transition-all shadow-sm">
+                    <Search size={16} className="text-gray-700" />
+                    <input className="w-full bg-transparent outline-none font-bold text-xs text-gray-700" placeholder="Search..." value={q} onChange={(e) => setQ(e.target.value)} />
+                  </div>
+                </div>
 
-      <div className="card" style={{ display: "grid", gap: ".5rem" }}>
-        <input className="input" placeholder="Search by name" value={q} onChange={(e) => setQ(e.target.value)} />
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-black uppercase text-gray-400 ml-3 tracking-widest">Location</label>
+                  <button onClick={() => setIsMapOpen(true)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gray-50 bg-gray-50/30 hover:border-brand-purple transition-all text-left shadow-sm">
+                    <MapPin size={16} className="text-brand-purple" />
+                    <span className="font-bold text-xs text-gray-700 truncate">{city || "Select City"}</span>
+                    {city && <X size={14} className="ml-auto text-gray-300" onClick={(e) => { e.stopPropagation(); setCity(""); }} />}
+                  </button>
+                </div>
+              </div>
 
-        <input
-          className="input"
-          placeholder="Category (e.g., Music)"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase text-gray-400 ml-3 tracking-widest">Categories</label>
+                <SelectorChips options={categoryOptions} onChange={setSelectedCategories} />
+              </div>
+            </div>
 
-        <input
-          className="input"
-          list="cities"
-          placeholder="City (type and pick)"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
+            {/* DREAPTA: Time Period & Discover */}
+            <div className="flex flex-col lg:border-l lg:border-gray-50 lg:pl-10">
+              <label className="text-[9px] font-black uppercase text-gray-400 ml-4 mb-3 tracking-widest">Time Period</label>
+              
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                <div className="dropdown dropdown-bottom">
+                  <div tabIndex={0} role="button" className="flex items-center gap-2.5 w-full px-3 py-3 bg-white border-2 border-gray-100 rounded-xl shadow-sm">
+                    <CalendarIcon size={14} className="text-brand-purple shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="text-[7px] font-black text-gray-400 uppercase leading-none mb-0.5">From</span>
+                      <span className="text-[10px] font-bold text-gray-800">
+                        {startDate ? format(parseISO(startDate), "dd.MM.yy") : "Pick date"}
+                      </span>
+                    </div>
+                  </div>
+                  <div tabIndex={0} className="dropdown-content z-[110] mt-1 bg-white rounded-2xl shadow-2xl border border-gray-100">
+                    <Calendar selectedDate={startDate} onSelect={(date) => { setStartDate(startDate === date ? "" : date); if (document.activeElement instanceof HTMLElement) (document.activeElement as any).blur(); }} />
+                  </div>
+                </div>
 
-        <datalist id="cities">
-          {cities.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
+                <div className="dropdown dropdown-bottom">
+                  <div tabIndex={0} role="button" className="flex items-center gap-2.5 w-full px-3 py-3 bg-white border-2 border-gray-100 rounded-xl shadow-sm">
+                    <CalendarIcon size={14} className="text-brand-purple shrink-0" />
+                    <div className="flex flex-col text-left">
+                      <span className="text-[7px] font-black text-gray-400 uppercase leading-none mb-0.5">To</span>
+                      <span className="text-[10px] font-bold text-gray-800">
+                        {endDate ? format(parseISO(endDate), "dd.MM.yy") : "Pick date"}
+                      </span>
+                    </div>
+                  </div>
+                  <div tabIndex={0} className="dropdown-content z-[110] mt-1 bg-white rounded-2xl shadow-2xl border border-gray-100">
+                    <Calendar selectedDate={endDate} onSelect={(date) => { setEndDate(endDate === date ? "" : date); if (document.activeElement instanceof HTMLElement) (document.activeElement as any).blur(); }} />
+                  </div>
+                </div>
+              </div>
 
-        <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-          <label>
-            From:{" "}
-            <input className="input" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </label>
-          <label>
-            To: <input className="input" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          </label>
-
-          {/* Butonul e opțional – filtrele deja declanșează query-ul */}
-          <button className="btn" type="button">
-            Search
-          </button>
+              <div className="mt-auto">
+                <button className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-[0.4em] hover:bg-brand-purple transition-all shadow-xl active:scale-[0.98]">
+                  Discover
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {isCitiesLoading && <small>Loading cities…</small>}
-        {isCitiesError && <small>Could not load cities.</small>}
+        {/* RESULTS GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {isEventsLoading ? (
+            <div className="col-span-full text-center py-20 font-black text-gray-200 uppercase tracking-widest animate-pulse">
+              Curating Events...
+            </div>
+          ) : (
+            events.map((e: any) => {
+              const isWished = wishlistIds.has(e.id);
+              return (
+                <EventCard 
+                  key={e.id} 
+                  {...e} 
+                  isWished={isWished} 
+                  isPending={toggleMut.isPending} 
+                  onToggleWishlist={() => {
+                    if (!loggedIn) {
+                      navigate("/login");
+                      return;
+                    }
+                    toggleMut.mutate({ id: e.id, wished: isWished });
+                  }} 
+                />
+              );
+            })
+          )}
+        </div>
+
+        {isMapOpen && <RomaniaMap onSelect={setCity} onClose={() => setIsMapOpen(false)} />}
       </div>
-
-      {isEventsLoading && <p>Loading…</p>}
-      {isEventsError && <p>Something went wrong.</p>}
-      {!isEventsLoading && events.length === 0 && <p>No events found.</p>}
-
-      <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: ".75rem" }}>
-        {events.map((e) => {
-  const wished = wishlistIds.has(e.id);
-
-  return (
-    <li key={e.id} className="card" style={{ display: "grid", gap: ".25rem" }}>
-      {e.imageUrl ? <img src={e.imageUrl} alt={e.title} /> : null}
-
-      <strong>{e.title}</strong>
-
-      <span>
-        {e.city}
-        {e.venue ? ` • ${e.venue}` : ""}
-      </span>
-
-      <span>{e.startDate ? new Date(e.startDate).toLocaleString() : ""}</span>
-      <span>{e.category ?? ""}</span>
-
-      {e.url ? (
-        <a href={e.url} target="_blank" rel="noreferrer">
-          Click here for details
-        </a>
-      ) : null}
-
-      {loggedIn ? (
-        <button
-          className={`wishlistHeart ${wished ? "wishlistHeart--full" : "wishlistHeart--empty"}`}
-          onClick={() => toggleMut.mutate({ id: e.id, wished })}
-          disabled={toggleMut.isPending}
-          aria-label={wished ? "Scoate din wishlist" : "Adaugă la wishlist"}
-          title={wished ? "Scoate din wishlist" : "Adaugă la wishlist"}
-        >
-          {/* icon-only */}
-        </button>
-      ) : (
-        <small>Log in to add to your wishlist.</small>
-      )}
-    </li>
-  );
-})}
-
-      </ul>
     </div>
   );
 }

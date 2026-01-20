@@ -116,14 +116,14 @@ export const SignInFlo: React.FC<SignInProps> = ({
         <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-purple/10 rounded-2xl mb-4 rotate-3 shadow-sm">
           <User className="w-7 h-7 text-brand-purple -rotate-3" />
         </div>
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Bine ai revenit!</h1>
-        <p className="text-gray-500 text-sm font-medium">Introdu datele pentru a accesa platforma</p>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Welcome Back!</h1>
+        <p className="text-gray-500 text-sm font-medium">Please enter your details to sign in</p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <AnimatedFormField
           type="email"
-          placeholder="Adresa de Email"
+          placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           icon={<Mail size={18} />}
@@ -131,7 +131,7 @@ export const SignInFlo: React.FC<SignInProps> = ({
 
         <AnimatedFormField
           type={showPassword ? "text" : "password"}
-          placeholder="Parolă"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           icon={<Lock size={18} />}
@@ -152,7 +152,7 @@ export const SignInFlo: React.FC<SignInProps> = ({
           className="w-full relative group bg-brand-purple text-white py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-xl hover:shadow-brand-purple/20 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 overflow-hidden"
         >
           <span className={loading ? 'opacity-0' : 'opacity-100'}>
-            Intră în cont
+            Sign In
           </span>
           
           {loading && (
@@ -164,9 +164,9 @@ export const SignInFlo: React.FC<SignInProps> = ({
       </form>
 
       <p className="mt-8 text-center text-sm text-gray-500 font-medium">
-        Nu ai cont?{' '}
+        Don't have an account?{' '}
         <button type="button" className="text-brand-purple hover:text-brand-pink font-bold underline decoration-2 underline-offset-4 transition-colors">
-          Creează unul
+          Create account
         </button>
       </p>
     </div>
